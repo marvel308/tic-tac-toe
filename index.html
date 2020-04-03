@@ -1,0 +1,33 @@
+<body>
+
+<h2>Welcome to Tic Tac Toe</h2>
+
+<label for="fname">Enter game id</label><br>
+<input type="text" id="game-id" name="fname"><br>
+<button id="myBtn">Try it</button>
+
+<script>
+let button = document.getElementById("myBtn");
+
+async function loadGame() {
+    let game_id = document.getElementById("game-id").value;
+    if (game_id) {
+        try {
+            const response = await fetch(location + '/id?game=' + game_id);
+            const id = await response.json();
+            let obj = {"game":game_id, "id":id};
+            location.href = '/' + btoa(JSON.stringify(obj));
+        }
+        catch (error) {
+            alert('Room is full, try a new room.');
+        }
+    }
+    else {
+  	  alert('no game selected')
+    }
+}
+
+button.addEventListener("click", () => loadGame());
+</script>
+
+</body>
