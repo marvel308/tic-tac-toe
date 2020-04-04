@@ -34,11 +34,13 @@ function save(file, data) {
 let games = new Map();
 let turns = new Map();
 let datas = new Map();
+let scores = new Map();
 
 async function main() {
   const indexPage = await load('index.html');
   const clientPage = await load('client.html');
   const drawScript = await load('client.js');
+  const scoreScript = await load('score.js')
 
   const server = http.createServer(async (request, response) => {
     const url = new URL(request.url, 'http://localhost:8080');
@@ -46,6 +48,9 @@ async function main() {
     if (path == '/') return serve(response, 'text/html', indexPage);
     if (path == '/client.js') {
       return serve(response, 'text/javascript', drawScript);
+    }
+    if (path == '/score.js') {
+      return serve(response, 'text/javascript', scoreScript);
     }
 
     if (path == '/id') {
@@ -75,6 +80,39 @@ async function main() {
           return error(response, 'Room not full.');
       }
       return error(response, 'Invalid operation.');
+    }
+    if (path == '/getscores') {
+      let game_id = url.searchParams.get('game');
+      if(game_id) {
+          let score = scores.get(game_id);
+          if(score) {
+              return serve(response, 'application/json', JSON.stringify(score));
+          }
+          score = {"0":0, "1":0, "2":0};
+          scores.set(game_id, score);
+          return serve(response, 'application/json', JSON.stringify(score));
+      }
+      return error(response, 'Invalid operation.');
+    }
+    if (path == '/reset') {
+        let update = url.searchParams.get('update');
+        if(update) {
+            let [game_id, id] = JSON.parse(Buffer.from(update, 'base64').toString());
+            if(id < 0 || id > 2 || !game_id) {
+                return error(response, 'Invalid operation.');
+            }
+            turns.set(game_id, 1);
+            let data = [
+	            0, 0, 0,
+	            0, 0, 0,
+	            0, 0, 0
+            ];
+            datas.set(game_id, data);
+            let score = scores.get(game_id) || {"0":0, "1":0, "2":0};
+            score[id]++;
+            scores.set(game_id, score);
+            return serve(response, 'application/json', JSON.stringify(game_id));
+        }
     }
     if (path == '/getdata') {
         let game_id = url.searchParams.get('game');

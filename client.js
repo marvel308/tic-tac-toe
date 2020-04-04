@@ -1,4 +1,4 @@
-var canvas = document.getElementById("myCanvas");
+var canvas = document.getElementById("game");
 var ctx = canvas.getContext("2d");
 let rect = canvas.getBoundingClientRect();
 let cellSize = 110;
@@ -139,47 +139,51 @@ async function play(event) {
     data = await updateData(getCellOnClick(mouse));
     fillBoard();
     if(data) {
-        checkWin(data);
+        let winner = checkWin(data);
+        if(winner != -1) {
+            reset(winner);
+        }
     }
 };
   
-let reset = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    fillBoard();
+async function reset(winner) {
+    let game_id = GameObject.game;
+	let id = GameObject.id
+	let update = JSON.stringify([game_id, winner]);
+	const response = await fetch('reset?update=' + btoa(update));
+    let new_game = await response.json();
+    alert('resetting ' + new_game);
 }
 
-let finished = false;
-
 let checkWin = (data) => {
-
-    if(finished || !data) {
+    let winner = -1;
+    let game_id = GameObject.game;
+	let id = GameObject.id;
+    if(!data) {
         return;
     }
   	for (let i = 0; i < winCombo.length; i++) {
         if(winCombo[i].every(num => data[num] == X)) {
             alert('X won');
-            finished = true;
-            // reset();
+            winner = X;
         }
       
       	if(winCombo[i].every(num => data[num] == O)) {
         	alert('O won');
-            finished = true;
-          // reset();
-        }
-        if(data.every(num => num!=0)) {
-            finished = true;
-      	    // reset();
+            winner = O;
         }
     }
+    if(data.every(num => num!=0)) {
+        alert('draw');
+        winner = 0; // draw.
+    }
+    return winner;
 };
 
 async function refresh() {
     let data = await fillBoard();
     checkWin(data);
-    if(!finished) {
-        setTimeout(refresh, 1000);
-    }
+    setTimeout(refresh, 1000);
 }
 
-refresh()
+refresh();
