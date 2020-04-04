@@ -13,8 +13,12 @@ async function loadGame() {
     let game_id = document.getElementById("game-id").value;
     if (game_id) {
         try {
-            const response = await fetch(location + '/id?game=' + game_id);
-            const id = await response.json();
+            let id = localStorage.getItem('tic-tac-toe-' + game_id);
+            if(id == null) {
+                const response = await fetch(location + '/id?game=' + game_id);
+                id = await response.json();
+                localStorage.setItem('tic-tac-toe-' + game_id, id);
+            }
             let obj = {"game":game_id, "id":id};
             location.href = '/' + btoa(JSON.stringify(obj));
         }
